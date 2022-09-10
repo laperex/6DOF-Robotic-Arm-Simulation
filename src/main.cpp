@@ -50,6 +50,16 @@ int main(int argcount, char** args) {
 		auto* shader = lre::GetShader("phong");
 		shader->Bind();
 
+		shader->SetUniformVec3("material.ambient", &glm::vec3(1.0, 0.5, 0.31)[0]);
+		shader->SetUniformVec3("material.diffuse", &glm::vec3(1.0, 0.5, 0.31)[0]);
+		shader->SetUniformVec3("material.specular", &glm::vec3(0.5, 0.5, 0.5)[0]);
+		shader->SetUniformf("material.shininess", 32);
+
+		shader->SetUniformVec4("light.pos", &glm::vec4(0, 1, 0, 0)[0]);
+		shader->SetUniformVec4("light.color", &glm::vec4(1.0)[0]);
+		shader->SetUniformf("light.ambient", 0.2);
+		shader->SetUniformf("light.diffuse", 0.5);
+		shader->SetUniformf("light.specular", 1.0);
 
 		Arm::Render({ 90, 90, 90, 90, 90, 90 });
 
@@ -60,6 +70,8 @@ int main(int argcount, char** args) {
 		const auto& end_time = std::chrono::high_resolution_clock::now();
 		dt = std::chrono::duration<double, std::ratio<1, 60>>(end_time - start_time).count();
 	}
+
+	lre::Destroy();
 
 	return 0;
 }

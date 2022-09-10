@@ -179,6 +179,12 @@ void lre::RenderMesh(UTIL_UUID id) {
 	Render(lgl::TRIANGLE, nullptr, vertexarray, vertexbuffer, indexbuffer, indexcount);
 }
 
+void lre::RenderGrid(Plane plane, int count, int grid_size, const glm::vec4& color) {
+	auto* vertexarray = Vertex::P1::VertexArray();
+
+	
+}
+
 void lre::Destroy() {
 	for (auto& pair: self->shader_registry) {
 		delete pair.second;

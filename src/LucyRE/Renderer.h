@@ -59,7 +59,14 @@ namespace lre {
 	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer = 0, int indexcount = 0);
 	void RenderMesh(UTIL_UUID id);
 
-	void Destroy();
+	enum Plane {
+		XY,
+		XZ,
+		YZ,
+	};
 
+	void RenderGrid(Plane plane, int count, int grid_size, const glm::vec4& color);
 	void Test();
+
+	void Destroy();
 }

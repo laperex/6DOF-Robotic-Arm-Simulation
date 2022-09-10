@@ -20,5 +20,17 @@ namespace Arm {
 		}
 	};
 
+	struct Context {
+		Position position;
+
+		static Context* Instance() {
+			static Context instance;
+			return &instance;
+		}
+	};
+
 	void Render(Position position);
+
+	void SetPositon(Position position);
+	glm::vec3 GetPositon();
 }

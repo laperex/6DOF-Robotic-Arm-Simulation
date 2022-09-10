@@ -60,3 +60,13 @@ void Arm::Render(Position position) {
 	lre::SetModel(base_rotation * wrist.transform.GetTranslationMatrix() * wrist.transform.GetRotationMatrix());
 	lre::RenderMesh(wrist.mesh_id);
 }
+
+#define self Context::Instance()
+
+void Arm::SetPositon(Position position) {
+	self->position = position;
+}
+
+glm::vec3 Arm::GetPositon() {
+	return self->position;
+}
