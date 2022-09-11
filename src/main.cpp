@@ -20,6 +20,7 @@ static auto& registry = Registry::Instance();
 int main(int argcount, char** args) {
 	Editor::AddLayer(MaterialLightEditPanel);
 	Editor::AddLayer(ArmControlPanel);
+	Editor::AddLayer(AnimationEditPanel);
 
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -66,14 +67,11 @@ int main(int argcount, char** args) {
 		material.Bind(shader);
 
 		{
-			Position position;
-
 			if (roboticarm.IKEnable())
-				position = GetInverseKinematics(roboticarm.GetIKTarget(), roboticarm.LowerElbowLength(), roboticarm.UpperElbowLength(), roboticarm.WristLength());
+				roboticarm.SetPosition(GetInverseKinematics(roboticarm.GetIKTarget(), roboticarm.LowerElbowLength(), roboticarm.UpperElbowLength(), roboticarm.WristLength()));
 
-			// Step();
-
-			roboticarm.Render(position);
+			roboticarm.AnimationStep();
+			roboticarm.Render(roboticarm.GetPosition());
 		}
 
 		shader->UnBind();

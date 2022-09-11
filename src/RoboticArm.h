@@ -21,6 +21,9 @@ struct AnimationStep {
 	Position position;
 	float progress_len = 2000;	// Steps taken to reach this position
 	float pow_t = 1.9;	// Step Gradient
+
+	AnimationStep() {}
+	AnimationStep(Position position): position(position) {}
 };
 
 struct Animation {
@@ -46,6 +49,7 @@ struct RoboticArm {
 
 	std::vector<Position> saved_positions;
 	RoboticArmAnimationStatus animation_status = STOP;
+	Animation animation;
 
 	struct AnimationContainer {
 		std::string name;
@@ -55,7 +59,6 @@ struct RoboticArm {
 	std::unordered_map<UTIL_UUID, AnimationContainer> animation_registry;
 
 	Animation* selected_animation = nullptr;
-
 
 	void Render(Position position);
 
@@ -80,8 +83,9 @@ struct RoboticArm {
 	RoboticArmAnimationStatus& AnimationStatus();
 
 	void Step();
+	void AnimationStep();
 
-	UTIL_UUID NewAnimation(std::string name, Animation animation, UTIL_UUID id = UTIL_GENERATE_UUID);
+	UTIL_UUID NewAnimation(std::string name, Animation animation = {}, UTIL_UUID id = UTIL_GENERATE_UUID);
 	Animation* GetAnimation(UTIL_UUID id);
 	UTIL_UUID GetAnimationIDByName(std::string name = "");
 	void SetSelectedAnimation(Animation* animation);

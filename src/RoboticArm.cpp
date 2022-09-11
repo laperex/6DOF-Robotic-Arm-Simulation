@@ -1,5 +1,6 @@
 #include "RoboticArm.h"
 #include <LucyRE/LucyRE.h>
+#include <iostream>
 #include "Transform.h"
 
 struct Node {
@@ -62,7 +63,7 @@ void RoboticArm::Render(Position position) {
 }
 
 void RoboticArm::SetPosition(Position position) {
-	position = position;
+	this->position = position;
 }
 
 Position RoboticArm::GetPosition() {
@@ -131,6 +132,9 @@ RoboticArmAnimationStatus& RoboticArm::AnimationStatus() {
 UTIL_UUID RoboticArm::NewAnimation(std::string name, Animation animation, UTIL_UUID id) {
 	assert(animation_registry.find(id) == animation_registry.end());
 
+	if (name == "")
+		name = "New Animation";
+
 	name = GetName(name);
 
 	animation_registry[id] = { name, animation };
@@ -192,37 +196,69 @@ float EaseFunc(float x, float t) {
 	return pow(x, t) / (pow(x, t) + pow(1 - x, t));
 }
 
-// void Step() {
-// 	static float progress = 0;
-// 	static int idx = 0;
-// 	static Position prev_position, next_position;
-// 	static float progress_len = 2000, progress_iter = 1 / progress_len;
+void RoboticArm::AnimationStep() {
+	static float progress = 0;
+	static int idx = 0;
+	static Position prev_position, next_position;
+	static float progress_len = 2000, progress_iter = 1 / progress_len;
 
-// 	if (animation_status == PLAY && saved_positions.size() > 0) {
-// 		ik_enable = false;
+	if (this->animation_status == PLAY && this->saved_positions.size() > 0) {
+		this->ik_enable = false;
 
-// 		if (progress >= 1) {
-// 			for (int i = 0; i < 6; i++)
-// 				prev_position[i] = position[i];
+		if (progress >= 1) {
+			for (int i = 0; i < 6; i++)
+				prev_position[i] = this->position[i];
 
-// 			idx++;
-// 			progress = 0;
-// 		} else {
-// 			for (int i = 0; i < 6; i++)
-// 				position[i] += (saved_positions[idx][i] - prev_position[i]) * EaseFunc(progress, 1.9);
+			idx++;
+			progress = 0;
+		} else {
+			for (int i = 0; i < 6; i++)
+				this->position[i] += (this->saved_positions[idx][i] - prev_position[i]) * EaseFunc(progress, 1.9);
 
-// 			progress += progress_iter;
-// 		}
+			progress += progress_iter;
+		}
+	} else {
+		for (int i = 0; i < 6; i++)
+			prev_position[i] = this->position[i];
+	}
+
+	if (idx >= this->saved_positions.size()) {
+		this->animation_status = STOP;
+	}
+
+	if (this->animation_status == STOP) {
+		idx = 0;
+	}
+}
+
+// static std::clock_t last_time = std::clock();
+// static float progress = 0;
+// static int idx = 0;
+
+// if (self->animation_status == PLAY && self->saved_positions.size() > 0) {
+// 	self->ik_enable = false;
+
+// 	if (progress >= 1) {
+// 		for (int i = 0; i < 6; i++)
+// 			prev_position[i] = self->position[i];
+
+// 		idx++;
+// 		progress = 0;
 // 	} else {
 // 		for (int i = 0; i < 6; i++)
-// 			prev_position[i] = position[i];
-// 	}
+// 			self->position[i] += (self->saved_positions[idx][i] - prev_position[i]) * EaseFunc(progress, 1.9);
 
-// 	if (idx >= saved_positions.size()) {
-// 		animation_status = STOP;
+// 		progress += progress_iter;
 // 	}
+// } else {
+// 	for (int i = 0; i < 6; i++)
+// 		prev_position[i] = self->position[i];
+// }
 
-// 	if (animation_status == STOP) {
-// 		idx = 0;
-// 	}
+// if (idx >= self->saved_positions.size()) {
+// 	self->animation_status = STOP;
+// }
+
+// if (self->animation_status == STOP) {
+// 	idx = 0;
 // }

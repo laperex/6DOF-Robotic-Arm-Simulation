@@ -1,8 +1,8 @@
 #include "Window.h"
 
 Window::Window() {
-	this->pos = { 30, 15 };
-	this->size = { 1920 * .6/* .77 */, 1080 * .6/* .77 */ };
+	this->pos = { 0, 0 };
+	this->size = { 1920 * .7, 1080 * .7 };
 
 	this->flags |= SDL_WINDOW_BORDERLESS;
 }
