@@ -7,3 +7,4 @@
 #include "UndoStack.h"
 #include "Importer.h"
 #include "JSON.h"
+#include "String.h"

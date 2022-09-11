@@ -14,7 +14,7 @@ static Node lower_elbow = {{ 44.2948, 86.6948, 55.25 }};
 static Node upper_elbow = {{ 44.2948, 190.8709, 55.25 }};
 static Node wrist = {{ 43.2270, 285.2090, 55.25 }};
 
-void Arm::Render(Position position) {
+void RoboticArm::Render(Position position) {
 	if (lower_base.mesh_id == UTIL_NULL_UUID) {
 		lower_base.mesh_id = lre::InsertMesh("lower_base", util::LoadMeshToGPU("C:\\Users\\krishnadev\\Documents\\LOWER BASE.stl", "", -lower_base.position));
 	}
@@ -61,56 +61,100 @@ void Arm::Render(Position position) {
 	lre::RenderMesh(wrist.mesh_id);
 }
 
-#define self Context::Instance()
-
-void Arm::SetPosition(Position position) {
-	self->position = position;
+void RoboticArm::SetPosition(Position position) {
+	position = position;
 }
 
-Arm::Position Arm::GetPosition() {
-	return self->position;
+Position RoboticArm::GetPosition() {
+	return position;
 }
 
-float& Arm::UpperElbowLength() {
+float& RoboticArm::UpperElbowLength() {
 	static float len = 120.59;
 	return len;
 }
 
-float& Arm::LowerElbowLength() {
+float& RoboticArm::LowerElbowLength() {
 	static float len = 94.34;
 	return len;
 }
 
-float& Arm::WristLength() {
+float& RoboticArm::WristLength() {
 	static float len = 121.86;
 	return len;
 }
 
-bool& Arm::IKEnable() {
-	return self->ik_enable;
+bool& RoboticArm::IKEnable() {
+	return ik_enable;
 }
 
-void Arm::SetIKTarget(glm::vec3 target) {
-	self->ik_target = target;
+void RoboticArm::SetIKTarget(glm::vec3 target) {
+	ik_target = target;
 }
 
-glm::vec3 Arm::GetIKTarget() {
-	return self->ik_target;
+glm::vec3 RoboticArm::GetIKTarget() {
+	return ik_target;
 }
 
-void Arm::AddPosition(Position position) {
-	self->saved_positions.push_back(position);
+bool RoboticArm::IsNamePresent(std::string name) {
+	for (auto& pair: animation_registry) {
+		if (pair.second.name == name) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
-void Arm::ClearSavedPositions() {
-	self->saved_positions.clear();
+std::string RoboticArm::GetName(std::string name) {
+	std::string result = name;
+
+	for (int i = 1; IsNamePresent(result); i++) {
+		result = name + " (" + std::to_string(i) + ")";
+	}
+
+	return result;
 }
 
-Arm::RoboticArmAnimationStatus& Arm::AnimationStatus() {
-	return self->animation_status;
+void RoboticArm::AddPosition(Position position) {
+	saved_positions.push_back(position);
 }
 
-Arm::Position::Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper) {
+void RoboticArm::ClearSavedPositions() {
+	saved_positions.clear();
+}
+
+RoboticArmAnimationStatus& RoboticArm::AnimationStatus() {
+	return animation_status;
+}
+
+UTIL_UUID RoboticArm::NewAnimation(std::string name, Animation animation, UTIL_UUID id) {
+	assert(animation_registry.find(id) == animation_registry.end());
+
+	name = GetName(name);
+
+	animation_registry[id] = { name, animation };
+
+	return id;
+}
+
+Animation* RoboticArm::GetAnimation(UTIL_UUID id) {
+	if (animation_registry.find(id) != animation_registry.end()) {
+		return &animation_registry[id].animation;
+	}
+
+	return nullptr;
+}
+
+void RoboticArm::SetSelectedAnimation(Animation* animation) {
+	selected_animation = animation;
+}
+
+Animation* RoboticArm::GetSelectedAnimation() {
+	return selected_animation;
+}
+
+Position::Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper) {
 	this->base = base;
 	this->lower_elbow = lower_elbow;
 	this->upper_elbow = upper_elbow;
@@ -119,45 +163,66 @@ Arm::Position::Position(float base, float lower_elbow, float upper_elbow, float 
 	this->gripper = gripper;
 }
 
-static float progress_len = 2000, progress_iter = 1 / progress_len;
-static Arm::Position prev_position, next_position;
+float& Position::operator[](int idx) {
+	assert(idx >= 0 && idx <= 5);
+
+	switch (idx) {
+		case 0:
+			return base;
+			break;
+		case 1:
+			return lower_elbow;
+			break;
+		case 2:
+			return upper_elbow;
+			break;
+		case 3:
+			return wrist;
+			break;
+		case 4:
+			return gripper_rotation;
+			break;
+		case 5:
+			return gripper;
+			break;
+	}
+}
 
 float EaseFunc(float x, float t) {
 	return pow(x, t) / (pow(x, t) + pow(1 - x, t));
 }
 
-void Arm::Step() {
-	static std::clock_t last_time = std::clock();
-	static float progress = 0;
-	static int idx = 0;
+// void Step() {
+// 	static float progress = 0;
+// 	static int idx = 0;
+// 	static Position prev_position, next_position;
+// 	static float progress_len = 2000, progress_iter = 1 / progress_len;
 
-	if (self->animation_status == PLAY && self->saved_positions.size() > 0) {
-		self->ik_enable = false;
+// 	if (animation_status == PLAY && saved_positions.size() > 0) {
+// 		ik_enable = false;
 
-		float offset = EaseFunc(progress, 1.9);
+// 		if (progress >= 1) {
+// 			for (int i = 0; i < 6; i++)
+// 				prev_position[i] = position[i];
 
-		if (progress >= 1) {
-			for (int i = 0; i < 6; i++)
-				prev_position[i] = self->position[i];
+// 			idx++;
+// 			progress = 0;
+// 		} else {
+// 			for (int i = 0; i < 6; i++)
+// 				position[i] += (saved_positions[idx][i] - prev_position[i]) * EaseFunc(progress, 1.9);
 
-			idx++;
-			progress = 0;
-		} else {
-			for (int i = 0; i < 6; i++)
-				self->position[i] = prev_position[i] + (self->saved_positions[idx][i] - prev_position[i]) * offset;
+// 			progress += progress_iter;
+// 		}
+// 	} else {
+// 		for (int i = 0; i < 6; i++)
+// 			prev_position[i] = position[i];
+// 	}
 
-			progress += progress_iter;
-		}
-	} else {
-		for (int i = 0; i < 6; i++)
-			prev_position[i] = self->position[i];
-	}
+// 	if (idx >= saved_positions.size()) {
+// 		animation_status = STOP;
+// 	}
 
-	if (idx >= self->saved_positions.size()) {
-		self->animation_status = STOP;
-	}
-
-	if (self->animation_status == STOP) {
-		idx = 0;
-	}
-}
+// 	if (animation_status == STOP) {
+// 		idx = 0;
+// 	}
+// }

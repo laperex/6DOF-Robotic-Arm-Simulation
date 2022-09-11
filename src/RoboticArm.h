@@ -1,72 +1,66 @@
 #pragma once
 
+#include "LucyUtil/UUID.h"
 #include "Light.h"
 #include "Material.h"
 
-namespace Arm {
-	struct Position {
-		float base = 90;
-		float lower_elbow = 90;
-		float upper_elbow = 90;
-		float wrist = 90;
-		float gripper_rotation = 90;
-		float gripper = 90;
+struct Position {
+	float base = 90;
+	float lower_elbow = 90;
+	float upper_elbow = 90;
+	float wrist = 90;
+	float gripper_rotation = 90;
+	float gripper = 90;
 
-		Position() {}
-		Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper);
-		float& operator[](int idx) {
-			assert(idx >= 0 && idx <= 5);
+	Position() {}
+	Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper);
+	float& operator[](int idx);
+};
 
-			switch (idx) {
-				case 0:
-					return base;
-					break;
-				case 1:
-					return lower_elbow;
-					break;
-				case 2:
-					return upper_elbow;
-					break;
-				case 3:
-					return wrist;
-					break;
-				case 4:
-					return gripper_rotation;
-					break;
-				case 5:
-					return gripper;
-					break;
-			}
-		}
+struct AnimationStep {
+	Position position;
+	float progress_len = 2000;	// Steps taken to reach this position
+	float pow_t = 1.9;	// Step Gradient
+};
+
+struct Animation {
+	std::vector<AnimationStep> animation_step_array;
+
+	float delay = 0;	// Delay after reaching position
+	bool loop = false;
+};
+
+enum RoboticArmAnimationStatus {
+	PLAY,
+	PAUSE,
+	STOP,
+
+	RoboticArmAnimationStatus_COUNT
+};
+
+struct RoboticArm {
+	Position position;
+	
+	glm::vec3 ik_target = { 100, 100, 100 };
+	bool ik_enable = false;
+
+	std::vector<Position> saved_positions;
+	RoboticArmAnimationStatus animation_status = STOP;
+
+	struct AnimationContainer {
+		std::string name;
+		Animation animation;
 	};
 
-	enum RoboticArmAnimationStatus {
-		PLAY,
-		PAUSE,
-		STOP,
+	std::unordered_map<UTIL_UUID, AnimationContainer> animation_registry;
 
-		RoboticArmAnimationStatus_COUNT
-	};
+	Animation* selected_animation = nullptr;
 
-	struct Context {
-		Position position;
-		
-		glm::vec3 ik_target = { 100, 100, 100 };
-		bool ik_enable = false;
-
-		std::vector<Position> saved_positions;
-		RoboticArmAnimationStatus animation_status = STOP;
-
-		static Context* Instance() {
-			static Context instance;
-			return &instance;
-		}
-	};
 
 	void Render(Position position);
 
 	void SetPosition(Position position);
-	Arm::Position GetPosition();
+	Position GetPosition();
 
 	float& UpperElbowLength();
 	float& LowerElbowLength();
@@ -86,4 +80,15 @@ namespace Arm {
 	RoboticArmAnimationStatus& AnimationStatus();
 
 	void Step();
-}
+
+	UTIL_UUID NewAnimation(std::string name, Animation animation, UTIL_UUID id = UTIL_GENERATE_UUID);
+	Animation* GetAnimation(UTIL_UUID id);
+	UTIL_UUID GetAnimationIDByName(std::string name = "");
+	void SetSelectedAnimation(Animation* animation);
+	Animation* GetSelectedAnimation();
+
+private:
+	bool IsNamePresent(std::string name);
+	std::string GetName(std::string name);
+};
+

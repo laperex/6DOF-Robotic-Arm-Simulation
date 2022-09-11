@@ -38,6 +38,8 @@ int main(int argcount, char** args) {
 	auto& light = registry.store<Light>();
 	auto& material = registry.store<Material>();
 
+	auto& roboticarm = registry.store<RoboticArm>();
+
 	double dt = 0;
 	while (!Events::IsQuittable()) {
 		const auto& start_time = std::chrono::high_resolution_clock::now();
@@ -64,13 +66,14 @@ int main(int argcount, char** args) {
 		material.Bind(shader);
 
 		{
+			Position position;
 
-			if (Arm::IKEnable())
-				Arm::SetPosition(Arm::GetInverseKinematics(Arm::GetIKTarget(), Arm::LowerElbowLength(), Arm::UpperElbowLength(), Arm::WristLength()));
+			if (roboticarm.IKEnable())
+				position = GetInverseKinematics(roboticarm.GetIKTarget(), roboticarm.LowerElbowLength(), roboticarm.UpperElbowLength(), roboticarm.WristLength());
 
-			Arm::Step();
+			// Step();
 
-			Arm::Render(Arm::GetPosition());
+			roboticarm.Render(position);
 		}
 
 		shader->UnBind();

@@ -10,48 +10,50 @@
 static auto& registry = Registry::Instance();
 
 void ArmControlPanel() {
+	auto& roboticarm = registry.store<RoboticArm>();
+
 	if (ImGui::Begin("Arm Control")) {
-		auto pos = Arm::GetPosition();
+		auto pos = roboticarm.GetPosition();
 	
 		ImGui::DragFloat("Base Y", &pos.base, 0.1, 0, 180);
 		ImGui::DragFloat("Lower Elbow", &pos.lower_elbow, 0.1, 0, 180);
 		ImGui::DragFloat("Upper Elbow", &pos.upper_elbow, 0.1, 0, 180);
 		ImGui::DragFloat("Wrist", &pos.wrist, 0.1, 0, 180);
 
-		Arm::SetPosition(pos);
+		roboticarm.SetPosition(pos);
 
-		auto target = Arm::GetIKTarget();
+		auto target = roboticarm.GetIKTarget();
 
-		ImGui::Checkbox("IK Enable", &Arm::IKEnable());
+		ImGui::Checkbox("IK Enable", &roboticarm.IKEnable());
 
-		ImGui::DragFloat("Upper Elbow Length", &Arm::UpperElbowLength(), 0.1, 0);
-		ImGui::DragFloat("Lower Elbow Length", &Arm::LowerElbowLength(), 0.1, 0);
-		ImGui::DragFloat("Wrist Length", &Arm::WristLength(), 0.1, 0);
+		ImGui::DragFloat("Upper Elbow Length", &roboticarm.UpperElbowLength(), 0.1, 0);
+		ImGui::DragFloat("Lower Elbow Length", &roboticarm.LowerElbowLength(), 0.1, 0);
+		ImGui::DragFloat("Wrist Length", &roboticarm.WristLength(), 0.1, 0);
 
 		ImGui::DragFloat3("Target", &target[0], 0.1);
 
-		Arm::SetIKTarget(target);
+		roboticarm.SetIKTarget(target);
 
 		if (ImGui::Button("Clear")) {
-			Arm::ClearSavedPositions();
+			roboticarm.ClearSavedPositions();
 		}
 
 		if (ImGui::Button("Save")) {
-			Arm::AddPosition(Arm::GetPosition());
+			roboticarm.AddPosition(roboticarm.GetPosition());
 		}
 
 		ImGui::Spacing();
 
-		auto& animation_status = Arm::AnimationStatus();
+		auto& animation_status = roboticarm.AnimationStatus();
 
 		switch (animation_status) {
-			case Arm::PLAY:
+			case PLAY:
 				ImGui::TextColored({ 0, 1, 0, 1 }, "PLAYING");
 				break;
-			case Arm::PAUSE:
+			case PAUSE:
 				ImGui::TextColored({ 1, 1, 0, 1 }, "PAUSED");
 				break;
-			case Arm::STOP:
+			case STOP:
 				ImGui::TextColored({ 1, 0, 0, 1 }, "STOPPED");
 				break;
 
@@ -60,15 +62,38 @@ void ArmControlPanel() {
 		}
 
 		if (ImGui::Button("PLAY")) {
-			animation_status = Arm::PLAY;
+			animation_status = PLAY;
 		}
 
 		if (ImGui::Button("PAUSE")) {
-			animation_status = Arm::PAUSE;
+			animation_status = PAUSE;
 		}
 
 		if (ImGui::Button("STOP")) {
-			animation_status = Arm::STOP;
+			animation_status = STOP;
+		}
+	}
+	ImGui::End();
+}
+
+void AnimationEditPanel() {
+	if (ImGui::Begin("Animation Properties")) {
+		if (ImGui::BeginTable("Animation", 3, ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders)) {
+			ImGui::TableNextRow();
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text("Name");
+			ImGui::TableSetColumnIndex(1);
+			ImGui::Text("Duration");
+			ImGui::TableSetColumnIndex(2);
+			ImGui::Text("Steps");
+
+			// for (auto& pair: ania) {
+			// 	if (pair.second.name.starts_with("_##")) continue;
+
+			// 	ImGui::TableNextRow();
+			// }
+
+			ImGui::EndTable();
 		}
 	}
 	ImGui::End();

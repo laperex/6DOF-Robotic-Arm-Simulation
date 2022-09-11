@@ -8,14 +8,14 @@ float Clamp(float val, float min = 0, float max = 180) {
 	return val;
 }
 
-Arm::Position Clamp(Arm::Position position) {
+Position Clamp(Position position) {
 	for (int i = 0; i < 6; i++)
 		((float*)&position)[i] = Clamp(((float*)&position)[i]);
 
 	return position;
 }
 
-Arm::Position Arm::GetInverseKinematics(glm::vec3 target, float len_elbow_lower, float len_elbow_upper, float len_wrist) {
+Position GetInverseKinematics(glm::vec3 target, float len_elbow_lower, float len_elbow_upper, float len_wrist) {
 	float b = len_elbow_lower;
 	float d = len_elbow_upper;
 	float a = len_wrist;
@@ -37,6 +37,6 @@ Arm::Position Arm::GetInverseKinematics(glm::vec3 target, float len_elbow_lower,
 	return Clamp({ base_angle, A + theta, C + B, 180 - B, 0, 0 });
 }
 
-glm::vec3 Arm::GetForwardKinematics(Position position, float len_elbow_lower, float len_elbow_upper, float len_wrist) {
+glm::vec3 GetForwardKinematics(Position position, float len_elbow_lower, float len_elbow_upper, float len_wrist) {
 	return { 0, 0, 0 };
 }
