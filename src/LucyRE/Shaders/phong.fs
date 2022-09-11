@@ -26,7 +26,7 @@ uniform Material material;
 void main() {
 	vec3 light_dir;
 	if (light.pos.w == 0.0)
-		light_dir = light.pos.xyz;
+		light_dir = normalize(light.pos.xyz);
 	else
 		light_dir = normalize(light.pos.xyz - frag_pos);
 

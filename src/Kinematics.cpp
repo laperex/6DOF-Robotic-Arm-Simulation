@@ -1,5 +1,20 @@
 #include "Kinematics.h"
 
+#define TO_DEGREE (180/3.14159265359)
+
+float Clamp(float val, float min = 0, float max = 180) {
+	if (val > max) val = max;
+	if (val < min) val = min;
+	return val;
+}
+
+Arm::Position Clamp(Arm::Position position) {
+	for (int i = 0; i < 6; i++)
+		((float*)&position)[i] = Clamp(((float*)&position)[i]);
+
+	return position;
+}
+
 Arm::Position Arm::GetInverseKinematics(glm::vec3 target, float len_elbow_lower, float len_elbow_upper, float len_wrist) {
 	float b = len_elbow_lower;
 	float d = len_elbow_upper;
@@ -19,7 +34,7 @@ Arm::Position Arm::GetInverseKinematics(glm::vec3 target, float len_elbow_lower,
 
 	float theta = atan2(y, l) * TO_DEGREE;
 	
-	return { base_angle, A + theta, C + B, 180 - B, 0, 0 };
+	return Clamp({ base_angle, A + theta, C + B, 180 - B, 0, 0 });
 }
 
 glm::vec3 Arm::GetForwardKinematics(Position position, float len_elbow_lower, float len_elbow_upper, float len_wrist) {

@@ -1,4 +1,6 @@
 #include "Events.h"
+#include "Kinematics.h"
+#include "EditorLayer.h"
 #include "Transform.h"
 #include "Camera.h"
 #include "Window.h"
@@ -11,10 +13,14 @@
 #include <LucyRE/LucyRE.h>
 #include <LucyUtil/Importer.h>
 #include "RoboticArm.h"
+#include "Panels.h"
 
 static auto& registry = Registry::Instance();
 
 int main(int argcount, char** args) {
+	Editor::AddLayer(MaterialLightEditPanel);
+	Editor::AddLayer(ArmControlPanel);
+
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
@@ -26,6 +32,11 @@ int main(int argcount, char** args) {
 	window.InitSDLWindow();
 	lgl::Initialize(SDL_GL_GetProcAddress);
 	lre::Initialize();
+
+	Editor::Initialize();
+
+	auto& light = registry.store<Light>();
+	auto& material = registry.store<Material>();
 
 	double dt = 0;
 	while (!Events::IsQuittable()) {
@@ -48,22 +59,23 @@ int main(int argcount, char** args) {
 		lre::SetViewPosition(camera.position);
 
 		auto* shader = lre::GetShader("phong");
-		shader->Bind();
 
-		shader->SetUniformVec3("material.ambient", &glm::vec3(1.0, 0.5, 0.31)[0]);
-		shader->SetUniformVec3("material.diffuse", &glm::vec3(1.0, 0.5, 0.31)[0]);
-		shader->SetUniformVec3("material.specular", &glm::vec3(0.5, 0.5, 0.5)[0]);
-		shader->SetUniformf("material.shininess", 32);
+		light.Bind(shader);
+		material.Bind(shader);
 
-		shader->SetUniformVec4("light.pos", &glm::vec4(0, 1, 0, 0)[0]);
-		shader->SetUniformVec4("light.color", &glm::vec4(1.0)[0]);
-		shader->SetUniformf("light.ambient", 0.2);
-		shader->SetUniformf("light.diffuse", 0.5);
-		shader->SetUniformf("light.specular", 1.0);
+		{
 
-		Arm::Render({ 90, 90, 90, 90, 90, 90 });
+			if (Arm::IKEnable())
+				Arm::SetPosition(Arm::GetInverseKinematics(Arm::GetIKTarget(), Arm::LowerElbowLength(), Arm::UpperElbowLength(), Arm::WristLength()));
+
+			Arm::Step();
+
+			Arm::Render(Arm::GetPosition());
+		}
 
 		shader->UnBind();
+
+		Editor::Update();
 
 		window.SwapWindow();
 
@@ -72,6 +84,7 @@ int main(int argcount, char** args) {
 	}
 
 	lre::Destroy();
+	Editor::ShutDown();
 
 	return 0;
 }

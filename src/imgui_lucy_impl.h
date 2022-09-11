@@ -30,3 +30,9 @@ namespace ImGui {
 		}
 	}
 }
+
+void embraceTheDarkness();
+
+void VS_Theme();
+
+void Red_DarkTheme();

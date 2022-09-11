@@ -63,10 +63,101 @@ void Arm::Render(Position position) {
 
 #define self Context::Instance()
 
-void Arm::SetPositon(Position position) {
+void Arm::SetPosition(Position position) {
 	self->position = position;
 }
 
-glm::vec3 Arm::GetPositon() {
+Arm::Position Arm::GetPosition() {
 	return self->position;
+}
+
+float& Arm::UpperElbowLength() {
+	static float len = 120.59;
+	return len;
+}
+
+float& Arm::LowerElbowLength() {
+	static float len = 94.34;
+	return len;
+}
+
+float& Arm::WristLength() {
+	static float len = 121.86;
+	return len;
+}
+
+bool& Arm::IKEnable() {
+	return self->ik_enable;
+}
+
+void Arm::SetIKTarget(glm::vec3 target) {
+	self->ik_target = target;
+}
+
+glm::vec3 Arm::GetIKTarget() {
+	return self->ik_target;
+}
+
+void Arm::AddPosition(Position position) {
+	self->saved_positions.push_back(position);
+}
+
+void Arm::ClearSavedPositions() {
+	self->saved_positions.clear();
+}
+
+Arm::RoboticArmAnimationStatus& Arm::AnimationStatus() {
+	return self->animation_status;
+}
+
+Arm::Position::Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper) {
+	this->base = base;
+	this->lower_elbow = lower_elbow;
+	this->upper_elbow = upper_elbow;
+	this->wrist = wrist;
+	this->gripper_rotation = gripper_rotation;
+	this->gripper = gripper;
+}
+
+static float progress_len = 2000, progress_iter = 1 / progress_len;
+static Arm::Position prev_position, next_position;
+
+float EaseFunc(float x, float t) {
+	return pow(x, t) / (pow(x, t) + pow(1 - x, t));
+}
+
+void Arm::Step() {
+	static std::clock_t last_time = std::clock();
+	static float progress = 0;
+	static int idx = 0;
+
+	if (self->animation_status == PLAY && self->saved_positions.size() > 0) {
+		self->ik_enable = false;
+
+		float offset = EaseFunc(progress, 1.9);
+
+		if (progress >= 1) {
+			for (int i = 0; i < 6; i++)
+				prev_position[i] = self->position[i];
+
+			idx++;
+			progress = 0;
+		} else {
+			for (int i = 0; i < 6; i++)
+				self->position[i] = prev_position[i] + (self->saved_positions[idx][i] - prev_position[i]) * offset;
+
+			progress += progress_iter;
+		}
+	} else {
+		for (int i = 0; i < 6; i++)
+			prev_position[i] = self->position[i];
+	}
+
+	if (idx >= self->saved_positions.size()) {
+		self->animation_status = STOP;
+	}
+
+	if (self->animation_status == STOP) {
+		idx = 0;
+	}
 }
