@@ -201,7 +201,12 @@ void RoboticArm::AnimationStep() {
 	static float progress = 0;
 	static int idx = 0;
 
-	if (this->animation_status == PLAY && this->animation.animation_step_array.size() > 0) {
+	if (animation == nullptr) {
+		prev_position = position;
+		return;
+	}
+
+	if (this->animation_status == PLAY && this->animation->animation_step_array.size() > 0) {
 		this->ik_enable = false;
 
 		if (progress >= 1) {
@@ -212,20 +217,22 @@ void RoboticArm::AnimationStep() {
 			progress = 0;
 		} else {
 			for (int i = 0; i < 6; i++)
-				this->position[i] = prev_position[i] + (this->animation.animation_step_array[idx].position[i] - prev_position[i]) * EaseFunc(progress, animation.animation_step_array[idx].pow_t);
+				this->position[i] = prev_position[i] + (this->animation->animation_step_array[idx].position[i] - prev_position[i]) * EaseFunc(progress, animation->animation_step_array[idx].pow_t);
 
-			progress += (1 / animation.animation_step_array[idx].progress_len);
+			progress += (1 / animation->animation_step_array[idx].progress_len);
 		}
 	} else if (this->animation_status != PAUSE) {
 		for (int i = 0; i < 6; i++)
 			prev_position[i] = this->position[i];
 	}
 
-	if (idx >= this->animation.animation_step_array.size()) {
+	if (idx >= this->animation->animation_step_array.size()) {
 		this->animation_status = STOP;
 	}
 
 	if (this->animation_status == STOP) {
 		idx = 0;
+		progress = 0;
+		prev_position = position;
 	}
 }

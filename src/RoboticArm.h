@@ -49,7 +49,7 @@ struct RoboticArm {
 
 	std::vector<Position> saved_positions;
 	RoboticArmAnimationStatus animation_status = STOP;
-	Animation animation;
+	Animation* animation = nullptr;
 
 	struct AnimationContainer {
 		std::string name;

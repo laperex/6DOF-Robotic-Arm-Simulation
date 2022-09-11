@@ -35,13 +35,13 @@ void ArmControlPanel() {
 
 		roboticarm.SetIKTarget(target);
 
-		if (ImGui::Button("Clear")) {
-			roboticarm.ClearSavedPositions();
-		}
+		// if (ImGui::Button("Clear")) {
+		// 	roboticarm.ClearSavedPositions();
+		// }
 
-		if (ImGui::Button("Save")) {
-			roboticarm.AddPosition(roboticarm.GetPosition());
-		}
+		// if (ImGui::Button("Save")) {
+		// 	roboticarm.AddPosition(roboticarm.GetPosition());
+		// }
 
 		ImGui::Spacing();
 
@@ -62,7 +62,7 @@ void ArmControlPanel() {
 				break;
 		}
 
-		ImGui::Spacing();
+		// ImGui::Spacing();
 
 		if (ImGui::Button("PLAY")) {
 			animation_status = PLAY;
@@ -94,19 +94,24 @@ void AnimationEditPanel() {
 			ImGui::TableSetColumnIndex(2);
 			ImGui::Text("Loop");
 
+			int idx = 0;
 			for (auto& pair: roboticarm.animation_registry) {
 				if (pair.second.name.starts_with("_##")) continue;
 				ImGui::TableNextRow();
 
 				ImGui::TableSetColumnIndex(0);
-				if (ImGui::Selectable(pair.second.name.c_str())) {
+				if (ImGui::Button((pair.second.name + "##" + std::to_string(idx)).c_str())) {
 					selected_animation = pair.first;
 				}
 
 				ImGui::TableSetColumnIndex(1);
-				if (ImGui::Button("Play", { ImGui::GetColumnWidth(1), 0 })) {
+				if (ImGui::Button(("Play##" + std::to_string(idx++)).c_str(), { ImGui::GetColumnWidth(1), 0 })) {
+					roboticarm.animation_status = STOP;
+
+					roboticarm.AnimationStep();
+
 					roboticarm.animation_status = PLAY;
-					roboticarm.animation = pair.second.animation;
+					roboticarm.animation = &pair.second.animation;
 				}
 
 				ImGui::TableSetColumnIndex(2);
@@ -163,11 +168,15 @@ void AnimationEditPanel() {
 						ImGui::OpenPopup("A");
 					}
 
-					for (int i = 0; i < 4; i++) {
+					for (int i = 0; i < 6; i++) {
 						ImGui::TableSetColumnIndex(i + 1);
 						ImGui::SetNextItemWidth(ImGui::GetColumnWidth(i + 1));
 						ImGui::DragFloat(("##" + std::to_string(idx) + std::to_string(i)).c_str(), &animation_step.position[i], 0.1, 0, 180);
 					}
+
+					ImGui::TableSetColumnIndex(7);
+					ImGui::SetNextItemWidth(ImGui::GetColumnWidth(7));
+					ImGui::DragFloat(("##STEP" + std::to_string(idx)).c_str(), &animation_step.progress_len, 1, 0);
 
 					ImGui::TableSetColumnIndex(8);
 					if (ImGui::Button(("Reset##" + std::to_string(idx)).c_str(), { ImGui::GetColumnWidth(8), 0 })) {
