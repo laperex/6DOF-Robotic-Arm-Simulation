@@ -197,12 +197,11 @@ float EaseFunc(float x, float t) {
 }
 
 void RoboticArm::AnimationStep() {
+	static Position prev_position;
 	static float progress = 0;
 	static int idx = 0;
-	static Position prev_position, next_position;
-	static float progress_len = 2000, progress_iter = 1 / progress_len;
 
-	if (this->animation_status == PLAY && this->saved_positions.size() > 0) {
+	if (this->animation_status == PLAY && this->animation.animation_step_array.size() > 0) {
 		this->ik_enable = false;
 
 		if (progress >= 1) {
@@ -213,16 +212,16 @@ void RoboticArm::AnimationStep() {
 			progress = 0;
 		} else {
 			for (int i = 0; i < 6; i++)
-				this->position[i] += (this->saved_positions[idx][i] - prev_position[i]) * EaseFunc(progress, 1.9);
+				this->position[i] = prev_position[i] + (this->animation.animation_step_array[idx].position[i] - prev_position[i]) * EaseFunc(progress, animation.animation_step_array[idx].pow_t);
 
-			progress += progress_iter;
+			progress += (1 / animation.animation_step_array[idx].progress_len);
 		}
-	} else {
+	} else if (this->animation_status != PAUSE) {
 		for (int i = 0; i < 6; i++)
 			prev_position[i] = this->position[i];
 	}
 
-	if (idx >= this->saved_positions.size()) {
+	if (idx >= this->animation.animation_step_array.size()) {
 		this->animation_status = STOP;
 	}
 
@@ -230,35 +229,3 @@ void RoboticArm::AnimationStep() {
 		idx = 0;
 	}
 }
-
-// static std::clock_t last_time = std::clock();
-// static float progress = 0;
-// static int idx = 0;
-
-// if (self->animation_status == PLAY && self->saved_positions.size() > 0) {
-// 	self->ik_enable = false;
-
-// 	if (progress >= 1) {
-// 		for (int i = 0; i < 6; i++)
-// 			prev_position[i] = self->position[i];
-
-// 		idx++;
-// 		progress = 0;
-// 	} else {
-// 		for (int i = 0; i < 6; i++)
-// 			self->position[i] += (self->saved_positions[idx][i] - prev_position[i]) * EaseFunc(progress, 1.9);
-
-// 		progress += progress_iter;
-// 	}
-// } else {
-// 	for (int i = 0; i < 6; i++)
-// 		prev_position[i] = self->position[i];
-// }
-
-// if (idx >= self->saved_positions.size()) {
-// 	self->animation_status = STOP;
-// }
-
-// if (self->animation_status == STOP) {
-// 	idx = 0;
-// }
