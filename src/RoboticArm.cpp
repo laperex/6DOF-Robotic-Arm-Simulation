@@ -107,6 +107,7 @@ glm::vec4 RoboticArm::RenderPicking() {
 
 		lgl::SetReadBuffer(lgl::Attachment::COLOR_ATTACHMENT1);
 		lgl::ReadPixels(norm.x, norm.y, 1, 1, lgl::Format::RGBA, lgl::Type::FLOAT, &pixel[0]);
+		// std::cout << pixel[0] << ' ' << pixel[1] << ' ' << pixel[2] << ' ' << pixel[3] << '\n';
 		lgl::ResetReadBuffer();
 	}
 
@@ -162,6 +163,26 @@ void RoboticArm::SetSelectedAnimation(Animation* animation) {
 
 Animation* RoboticArm::GetSelectedAnimation() {
 	return selected_animation;
+}
+
+glm::mat4 RoboticArm::GetLowerBaseTranslationalMatrix() {
+	return lower_base.transform.GetTranslationMatrix();
+}
+
+glm::mat4 RoboticArm::GetUpperBaseTranslationalMatrix() {
+	return upper_base.transform.GetTranslationMatrix();
+}
+
+glm::mat4 RoboticArm::GetLowerElbowTranslationalMatrix() {
+	return lower_elbow.transform.GetTranslationMatrix();
+}
+
+glm::mat4 RoboticArm::GetUpperElbowTranslationalMatrix() {
+	return upper_elbow.transform.GetTranslationMatrix();
+}
+
+glm::mat4 RoboticArm::GetWristTranslationalMatrix() {
+	return wrist.transform.GetTranslationMatrix();
 }
 
 glm::mat4 RoboticArm::GetLowerBaseMatrix() {
@@ -228,3 +249,4 @@ void RoboticArm::AnimationStep() {
 		prev_position = position;
 	}
 }
+
