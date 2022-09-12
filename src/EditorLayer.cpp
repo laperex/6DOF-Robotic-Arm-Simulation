@@ -48,35 +48,37 @@ void Editor::RenderBegin() {
 	ImGui::NewFrame();
 	ImGuizmo::BeginFrame();
 
+	auto& window = registry.store<Window>();
+
 	// Screen
-	// {
-	// 	static bool p_open = false;
-	// 	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-	// 	static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoTitleBar;
-		
-	// 	int x = 0, y = 0, w = 0, h = 0;
-	// 	SDL_GetWindowSize(window.sdl_window, &w, &h);
+	{
+		static bool p_open = false;
+		static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+		static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoTitleBar;
 
-	// 	if (editor_state.enable_viewports)
-	// 		SDL_GetWindowPosition(window.sdl_window, &x, &y);
+		int x = 0, y = 0, w = 0, h = 0;
+		SDL_GetWindowSize(window.sdl_window, &w, &h);
 
-	// 	ImGui::SetNextWindowPos(ImVec2(x, y));
-	// 	ImGui::SetNextWindowSize(ImVec2(w, h));
+		// if (editor_state.enable_viewports)
+		// 	SDL_GetWindowPosition(window.sdl_window, &x, &y);
 
-	// 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	// 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	// 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+		ImGui::SetNextWindowPos(ImVec2(x, y));
+		ImGui::SetNextWindowSize(ImVec2(w, h));
 
-	// 	ImGui::Begin("DockSpace", &p_open, window_flags);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 
-	// 	ImGui::PopStyleVar(3);
-	// 	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) {
+		ImGui::Begin("DockSpace", &p_open, window_flags);
+
+		ImGui::PopStyleVar(3);
+		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable) {
 			
-	// 		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-	// 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-	// 	}
-	// 	ImGui::End();
-	// }
+			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		}
+		ImGui::End();
+	}
 }
 
 void Editor::RenderEnd() {

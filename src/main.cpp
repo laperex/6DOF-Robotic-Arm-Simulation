@@ -14,11 +14,13 @@
 #include <LucyUtil/Importer.h>
 #include "RoboticArm.h"
 #include "Panels.h"
+#include "EditorPanel.h"
 
 static auto& registry = Registry::Instance();
 
 int main(int argcount, char** args) {
-	Editor::AddLayer(MaterialLightEditPanel);
+	// Editor::AddLayer(RoboticArmGizmoSystem);
+	Editor::AddLayer(EditorPanel);
 	Editor::AddLayer(ArmControlPanel);
 	Editor::AddLayer(AnimationEditPanel);
 
@@ -31,6 +33,7 @@ int main(int argcount, char** args) {
 	auto& camera = registry.store<Camera>();
 
 	window.InitSDLWindow();
+
 	lgl::Initialize(SDL_GL_GetProcAddress);
 	lre::Initialize();
 
@@ -47,15 +50,31 @@ int main(int argcount, char** args) {
 
 		Events::Update();
 
+		glEnable(GL_DEPTH_TEST);
+		lgl::Viewport(0, 0, window.size.x, window.size.y);
+		lgl::Clear(0, 0, 0, 1, lgl::COLOR_BUFFER_BIT | lgl::DEPTH_BUFFER_BIT);
+
+		if (window.framebuffer == nullptr) {
+			window.framebuffer = new lgl::FrameBuffer(window.size.x, window.size.y, true);
+		}
+
+		window.framebuffer->Bind();
+		lre::SetFrameBuffer(window.framebuffer);
+
+		// glEnable(GL_DEPTH_TEST);
+		// glEnable(GL_LINE_SMOOTH);
+		// lgl::Viewport(0, 0, window.size.x, window.size.y);
+		// lgl::Clear(0, 0, 0, 1, lgl::COLOR_BUFFER_BIT | lgl::DEPTH_BUFFER_BIT);
+
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, window.size.x, window.size.y);
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		camera.width = window.size.x;
 		camera.height = window.size.y;
 
 		camera.Update(dt);
-
-		lgl::Clear(0, 0, 0, 1, lgl::COLOR_BUFFER_BIT | lgl::DEPTH_BUFFER_BIT);
-		lgl::Viewport(0, 0, window.size.x, window.size.y);
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_LINE_SMOOTH);
 
 		lre::SetProjection(camera.projection);
 		lre::SetView(camera.view);
@@ -67,16 +86,21 @@ int main(int argcount, char** args) {
 		material.Bind(shader);
 
 		{
-			if (roboticarm.IKEnable())
-				roboticarm.SetPosition(GetInverseKinematics(roboticarm.GetIKTarget(), roboticarm.LowerElbowLength(), roboticarm.UpperElbowLength(), roboticarm.WristLength()));
+			if (roboticarm.ik_enable)
+				roboticarm.position = GetInverseKinematics(roboticarm.ik_target, roboticarm.lowerelbow_length, roboticarm.upperelbow_length, roboticarm.wrist_length);
 
 			roboticarm.AnimationStep();
-			roboticarm.Render(roboticarm.GetPosition());
+			roboticarm.CalculateMatrices(roboticarm.position);
+			roboticarm.Render();
 		}
 
 		shader->UnBind();
 
+		window.framebuffer->UnBind();
+
 		Editor::Update();
+
+		// lre::RenderFrameBufferToScreen(window.framebuffer, window.size);
 
 		window.SwapWindow();
 

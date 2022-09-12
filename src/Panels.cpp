@@ -14,26 +14,18 @@ void ArmControlPanel() {
 	auto& roboticarm = registry.store<RoboticArm>();
 
 	if (ImGui::Begin("Arm Control")) {
-		auto pos = roboticarm.GetPosition();
-	
-		ImGui::DragFloat("Base Y", &pos.base, 0.1, 0, 180);
-		ImGui::DragFloat("Lower Elbow", &pos.lower_elbow, 0.1, 0, 180);
-		ImGui::DragFloat("Upper Elbow", &pos.upper_elbow, 0.1, 0, 180);
-		ImGui::DragFloat("Wrist", &pos.wrist, 0.1, 0, 180);
+		ImGui::DragFloat("Base Y", &roboticarm.position.base, 0.1, 0, 180);
+		ImGui::DragFloat("Lower Elbow", &roboticarm.position.lower_elbow, 0.1, 0, 180);
+		ImGui::DragFloat("Upper Elbow", &roboticarm.position.upper_elbow, 0.1, 0, 180);
+		ImGui::DragFloat("Wrist", &roboticarm.position.wrist, 0.1, 0, 180);
 
-		roboticarm.SetPosition(pos);
+		ImGui::Checkbox("IK Enable", &roboticarm.ik_enable);
 
-		auto target = roboticarm.GetIKTarget();
+		ImGui::DragFloat("Upper Elbow Length", &roboticarm.upperelbow_length, 0.1, 0);
+		ImGui::DragFloat("Lower Elbow Length", &roboticarm.lowerelbow_length, 0.1, 0);
+		ImGui::DragFloat("Wrist Length", &roboticarm.wrist_length, 0.1, 0);
 
-		ImGui::Checkbox("IK Enable", &roboticarm.IKEnable());
-
-		ImGui::DragFloat("Upper Elbow Length", &roboticarm.UpperElbowLength(), 0.1, 0);
-		ImGui::DragFloat("Lower Elbow Length", &roboticarm.LowerElbowLength(), 0.1, 0);
-		ImGui::DragFloat("Wrist Length", &roboticarm.WristLength(), 0.1, 0);
-
-		ImGui::DragFloat3("Target", &target[0], 0.1);
-
-		roboticarm.SetIKTarget(target);
+		ImGui::DragFloat3("Target", &roboticarm.ik_target[0], 0.1);
 
 		// if (ImGui::Button("Clear")) {
 		// 	roboticarm.ClearSavedPositions();
@@ -45,7 +37,7 @@ void ArmControlPanel() {
 
 		ImGui::Spacing();
 
-		auto& animation_status = roboticarm.AnimationStatus();
+		auto& animation_status = roboticarm.animation_status;
 
 		switch (animation_status) {
 			case PLAY:
@@ -100,7 +92,7 @@ void AnimationEditPanel() {
 				ImGui::TableNextRow();
 
 				ImGui::TableSetColumnIndex(0);
-				if (ImGui::Button((pair.second.name + "##" + std::to_string(idx)).c_str())) {
+				if (ImGui::Selectable((pair.second.name + "##" + std::to_string(idx)).c_str())) {
 					selected_animation = pair.first;
 				}
 
@@ -180,14 +172,14 @@ void AnimationEditPanel() {
 
 					ImGui::TableSetColumnIndex(8);
 					if (ImGui::Button(("Reset##" + std::to_string(idx)).c_str(), { ImGui::GetColumnWidth(8), 0 })) {
-						animation_step.position = roboticarm.GetPosition();
+						animation_step.position = roboticarm.position;
 					}
 				}
 
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
 				if (ImGui::Button("+", { ImGui::GetColumnWidth(0), 0 })) {
-					animation.animation_step_array.push_back({ roboticarm.GetPosition() });
+					animation.animation_step_array.push_back({ roboticarm.position });
 				}
 
 				ImGui::EndTable();

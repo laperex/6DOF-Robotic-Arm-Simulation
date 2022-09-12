@@ -1,21 +1,30 @@
 #include "RoboticArm.h"
+#include <imgui_lucy_impl.h>
 #include <LucyRE/LucyRE.h>
 #include <iostream>
+#include "Camera.h"
 #include "Transform.h"
+#include "ECS.h"
+#include "Window.h"
+#include "Events.h"
 
-struct Node {
+static auto& registry = Registry::Instance();
+
+static struct {
 	glm::vec3 position = { 0, 0, 0 };
 	UTIL_UUID mesh_id = UTIL_NULL_UUID;
 	Transform transform;
-};
+	glm::mat4 matrix;
+}
+lower_base = {{ 44.0448, 71.6270, 55.25 }},
+upper_base = {{ 44.0448, 71.6270, 55.25 }},
+lower_elbow = {{ 44.2948, 86.6948, 55.25 }},
+upper_elbow = {{ 44.2948, 190.8709, 55.25 }},
+wrist = {{ 43.2270, 285.2090, 55.25 }};
 
-static Node lower_base = {{ 44.0448, 71.6270, 55.25 }};
-static Node upper_base = {{ 44.0448, 71.6270, 55.25 }};
-static Node lower_elbow = {{ 44.2948, 86.6948, 55.25 }};
-static Node upper_elbow = {{ 44.2948, 190.8709, 55.25 }};
-static Node wrist = {{ 43.2270, 285.2090, 55.25 }};
+void RoboticArm::CalculateMatrices(Position position) {
+	auto& window = registry.store<Window>();
 
-void RoboticArm::Render(Position position) {
 	if (lower_base.mesh_id == UTIL_NULL_UUID) {
 		lower_base.mesh_id = lre::InsertMesh("lower_base", util::LoadMeshToGPU("C:\\Users\\krishnadev\\Documents\\LOWER BASE.stl", "", -lower_base.position));
 	}
@@ -48,53 +57,62 @@ void RoboticArm::Render(Position position) {
 	upper_elbow.transform.translation = lower_elbow.transform.translation + (((upper_elbow.position - lower_elbow.position)) * glm::quat(glm::radians(glm::vec3(0, 0, -lower_elbow.transform.rotation.z))));
 	wrist.transform.translation = upper_elbow.transform.translation + (((wrist.position - upper_elbow.position)) * glm::quat(glm::radians(glm::vec3(0, 0, -upper_elbow.transform.rotation.z))));
 
-	auto base_rotation = upper_base.transform.GetRotationMatrix();
-
-	lre::SetModel(lower_base.transform.GetTranslationMatrix());
-	lre::RenderMesh(lower_base.mesh_id);
-	lre::SetModel(base_rotation * upper_base.transform.GetTranslationMatrix());
-	lre::RenderMesh(upper_base.mesh_id);
-	lre::SetModel(base_rotation * lower_elbow.transform.GetTranslationMatrix() * lower_elbow.transform.GetRotationMatrix());
-	lre::RenderMesh(lower_elbow.mesh_id);
-	lre::SetModel(base_rotation * upper_elbow.transform.GetTranslationMatrix() * upper_elbow.transform.GetRotationMatrix());
-	lre::RenderMesh(upper_elbow.mesh_id);
-	lre::SetModel(base_rotation * wrist.transform.GetTranslationMatrix() * wrist.transform.GetRotationMatrix());
-	lre::RenderMesh(wrist.mesh_id);
+	lower_base.matrix = lower_base.transform.GetTranslationMatrix();
+	upper_base.matrix = upper_base.transform.GetRotationMatrix() * upper_base.transform.GetTranslationMatrix();
+	lower_elbow.matrix = upper_base.transform.GetRotationMatrix() * lower_elbow.transform.GetTranslationMatrix() * lower_elbow.transform.GetRotationMatrix();
+	upper_elbow.matrix = upper_base.transform.GetRotationMatrix() * upper_elbow.transform.GetTranslationMatrix() * upper_elbow.transform.GetRotationMatrix();
+	wrist.matrix = upper_base.transform.GetRotationMatrix() * wrist.transform.GetTranslationMatrix() * wrist.transform.GetRotationMatrix();
 }
 
-void RoboticArm::SetPosition(Position position) {
-	this->position = position;
+void RoboticArm::Render() {
+	RenderPicking();
+
+	auto* shader = lre::GetShader("phong");
+
+	lre::SetModel(lower_base.matrix);
+	lre::RenderMesh(lower_base.mesh_id, shader);
+	lre::SetModel(upper_base.matrix);
+	lre::RenderMesh(upper_base.mesh_id, shader);
+	lre::SetModel(lower_elbow.matrix);
+	lre::RenderMesh(lower_elbow.mesh_id, shader);
+	lre::SetModel(upper_elbow.matrix);
+	lre::RenderMesh(upper_elbow.mesh_id, shader);
+	lre::SetModel(wrist.matrix);
+	lre::RenderMesh(wrist.mesh_id, shader);
 }
 
-Position RoboticArm::GetPosition() {
-	return position;
+static glm::vec4 pixel;
+
+glm::vec4 RoboticArm::GetPixel() {
+	return pixel;		
 }
 
-float& RoboticArm::UpperElbowLength() {
-	static float len = 120.59;
-	return len;
-}
+glm::vec4 RoboticArm::RenderPicking() {
+	auto& window = registry.store<Window>();
 
-float& RoboticArm::LowerElbowLength() {
-	static float len = 94.34;
-	return len;
-}
+	lre::SetModel(lower_base.matrix);
+	lre::RenderMesh(lower_base.mesh_id, 1);
+	lre::SetModel(upper_base.matrix);
+	lre::RenderMesh(upper_base.mesh_id, 2);
+	lre::SetModel(lower_elbow.matrix);
+	lre::RenderMesh(lower_elbow.mesh_id, 3);
+	lre::SetModel(upper_elbow.matrix);
+	lre::RenderMesh(upper_elbow.mesh_id, 4);
+	lre::SetModel(wrist.matrix);
+	lre::RenderMesh(wrist.mesh_id, 5);
 
-float& RoboticArm::WristLength() {
-	static float len = 121.86;
-	return len;
-}
+	pixel = glm::vec4(0.0);
+	if (Events::IsButtonPressed(SDL_BUTTON_LEFT)) {
+		auto norm = (Events::GetCursorPosNormalized(window.pos.x, window.pos.y, window.size.x, window.size.y) * glm::vec3(window.size.x, window.size.y, 0) + glm::vec3(window.size.x, window.size.y, 0)) / 2.0f;
 
-bool& RoboticArm::IKEnable() {
-	return ik_enable;
-}
+		lgl::SetReadBuffer(lgl::Attachment::COLOR_ATTACHMENT1);
+		lgl::ReadPixels(norm.x, norm.y, 1, 1, lgl::Format::RGBA, lgl::Type::FLOAT, &pixel[0]);
+		lgl::ResetReadBuffer();
+	}
 
-void RoboticArm::SetIKTarget(glm::vec3 target) {
-	ik_target = target;
-}
+	lgl::Clear(0, 0, 0, 1, lgl::COLOR_BUFFER_BIT | lgl::DEPTH_BUFFER_BIT);
 
-glm::vec3 RoboticArm::GetIKTarget() {
-	return ik_target;
+	return pixel;
 }
 
 bool RoboticArm::IsNamePresent(std::string name) {
@@ -115,18 +133,6 @@ std::string RoboticArm::GetName(std::string name) {
 	}
 
 	return result;
-}
-
-void RoboticArm::AddPosition(Position position) {
-	saved_positions.push_back(position);
-}
-
-void RoboticArm::ClearSavedPositions() {
-	saved_positions.clear();
-}
-
-RoboticArmAnimationStatus& RoboticArm::AnimationStatus() {
-	return animation_status;
 }
 
 UTIL_UUID RoboticArm::NewAnimation(std::string name, Animation animation, UTIL_UUID id) {
@@ -158,38 +164,24 @@ Animation* RoboticArm::GetSelectedAnimation() {
 	return selected_animation;
 }
 
-Position::Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper) {
-	this->base = base;
-	this->lower_elbow = lower_elbow;
-	this->upper_elbow = upper_elbow;
-	this->wrist = wrist;
-	this->gripper_rotation = gripper_rotation;
-	this->gripper = gripper;
+glm::mat4 RoboticArm::GetLowerBaseMatrix() {
+	return lower_base.matrix;
 }
 
-float& Position::operator[](int idx) {
-	assert(idx >= 0 && idx <= 5);
+glm::mat4 RoboticArm::GetUpperBaseMatrix() {
+	return upper_base.matrix;
+}
 
-	switch (idx) {
-		case 0:
-			return base;
-			break;
-		case 1:
-			return lower_elbow;
-			break;
-		case 2:
-			return upper_elbow;
-			break;
-		case 3:
-			return wrist;
-			break;
-		case 4:
-			return gripper_rotation;
-			break;
-		case 5:
-			return gripper;
-			break;
-	}
+glm::mat4 RoboticArm::GetLowerElbowMatrix() {
+	return lower_elbow.matrix;
+}
+
+glm::mat4 RoboticArm::GetUpperElbowMatrix() {
+	return upper_elbow.matrix;
+}
+
+glm::mat4 RoboticArm::GetWristMatrix() {
+	return wrist.matrix;
 }
 
 float EaseFunc(float x, float t) {

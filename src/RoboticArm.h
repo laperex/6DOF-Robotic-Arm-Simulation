@@ -3,19 +3,7 @@
 #include "LucyUtil/UUID.h"
 #include "Light.h"
 #include "Material.h"
-
-struct Position {
-	float base = 90;
-	float lower_elbow = 90;
-	float upper_elbow = 90;
-	float wrist = 90;
-	float gripper_rotation = 90;
-	float gripper = 90;
-
-	Position() {}
-	Position(float base, float lower_elbow, float upper_elbow, float wrist, float gripper_rotation, float gripper);
-	float& operator[](int idx);
-};
+#include "Position.h"
 
 struct AnimationStep {
 	Position position;
@@ -47,9 +35,12 @@ struct RoboticArm {
 	glm::vec3 ik_target = { 100, 100, 100 };
 	bool ik_enable = false;
 
-	std::vector<Position> saved_positions;
 	RoboticArmAnimationStatus animation_status = STOP;
 	Animation* animation = nullptr;
+
+	float upperelbow_length = 120.59;
+	float lowerelbow_length = 94.34;
+	float wrist_length = 121.86;
 
 	struct AnimationContainer {
 		std::string name;
@@ -60,29 +51,10 @@ struct RoboticArm {
 
 	Animation* selected_animation = nullptr;
 
-	void Render(Position position);
-
-	void SetPosition(Position position);
-	Position GetPosition();
-
-	float& UpperElbowLength();
-	float& LowerElbowLength();
-	float& WristLength();
-
-	bool& IKEnable();
-	void SetIKTarget(glm::vec3 target);
-	glm::vec3 GetIKTarget();
-
-	void SetLight(Light light);
-	void SetMaterial(Material light);
-	Light SetLight();
-	Material SetMaterial();
-
-	void AddPosition(Position position);
-	void ClearSavedPositions();
-	RoboticArmAnimationStatus& AnimationStatus();
-
-	void Step();
+	void CalculateMatrices(Position position);
+	void Render();
+	glm::vec4 GetPixel();
+	glm::vec4 RenderPicking();
 	void AnimationStep();
 
 	UTIL_UUID NewAnimation(std::string name, Animation animation = {}, UTIL_UUID id = UTIL_GENERATE_UUID);
@@ -91,8 +63,13 @@ struct RoboticArm {
 	void SetSelectedAnimation(Animation* animation);
 	Animation* GetSelectedAnimation();
 
+	glm::mat4 GetLowerBaseMatrix();
+	glm::mat4 GetUpperBaseMatrix();
+	glm::mat4 GetLowerElbowMatrix();
+	glm::mat4 GetUpperElbowMatrix();
+	glm::mat4 GetWristMatrix();
+
 private:
 	bool IsNamePresent(std::string name);
 	std::string GetName(std::string name);
 };
-
