@@ -65,55 +65,18 @@ void RoboticArm::CalculateMatrices(Position position) {
 }
 
 void RoboticArm::Render() {
-	RenderPicking();
-
 	auto* shader = lre::GetShader("phong");
 
 	lre::SetModel(lower_base.matrix);
-	lre::RenderMesh(lower_base.mesh_id, shader);
+	lre::RenderMesh(lower_base.mesh_id, shader, 1);
 	lre::SetModel(upper_base.matrix);
-	lre::RenderMesh(upper_base.mesh_id, shader);
+	lre::RenderMesh(upper_base.mesh_id, shader, 2);
 	lre::SetModel(lower_elbow.matrix);
-	lre::RenderMesh(lower_elbow.mesh_id, shader);
+	lre::RenderMesh(lower_elbow.mesh_id, shader, 3);
 	lre::SetModel(upper_elbow.matrix);
-	lre::RenderMesh(upper_elbow.mesh_id, shader);
+	lre::RenderMesh(upper_elbow.mesh_id, shader, 4);
 	lre::SetModel(wrist.matrix);
-	lre::RenderMesh(wrist.mesh_id, shader);
-}
-
-static glm::vec4 pixel;
-
-glm::vec4 RoboticArm::GetPixel() {
-	return pixel;		
-}
-
-glm::vec4 RoboticArm::RenderPicking() {
-	auto& window = registry.store<Window>();
-
-	lre::SetModel(lower_base.matrix);
-	lre::RenderMesh(lower_base.mesh_id, 1);
-	lre::SetModel(upper_base.matrix);
-	lre::RenderMesh(upper_base.mesh_id, 2);
-	lre::SetModel(lower_elbow.matrix);
-	lre::RenderMesh(lower_elbow.mesh_id, 3);
-	lre::SetModel(upper_elbow.matrix);
-	lre::RenderMesh(upper_elbow.mesh_id, 4);
-	lre::SetModel(wrist.matrix);
-	lre::RenderMesh(wrist.mesh_id, 5);
-
-	pixel = glm::vec4(0.0);
-	if (Events::IsButtonPressed(SDL_BUTTON_LEFT)) {
-		auto norm = (Events::GetCursorPosNormalized(window.pos.x, window.pos.y, window.size.x, window.size.y) * glm::vec3(window.size.x, window.size.y, 0) + glm::vec3(window.size.x, window.size.y, 0)) / 2.0f;
-
-		lgl::SetReadBuffer(lgl::Attachment::COLOR_ATTACHMENT1);
-		lgl::ReadPixels(norm.x, norm.y, 1, 1, lgl::Format::RGBA, lgl::Type::FLOAT, &pixel[0]);
-		// std::cout << pixel[0] << ' ' << pixel[1] << ' ' << pixel[2] << ' ' << pixel[3] << '\n';
-		lgl::ResetReadBuffer();
-	}
-
-	lgl::Clear(0, 0, 0, 1, lgl::COLOR_BUFFER_BIT | lgl::DEPTH_BUFFER_BIT);
-
-	return pixel;
+	lre::RenderMesh(wrist.mesh_id, shader, 5);
 }
 
 bool RoboticArm::IsNamePresent(std::string name) {

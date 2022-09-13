@@ -56,9 +56,10 @@ namespace lre {
 
 	UTIL_UUID InsertMesh(std::string name, const util::TYPE_MESH_GPU& mesh, UTIL_UUID id = UTIL_GENERATE_UUID);
 
-	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer = 0, int indexcount = 0, bool picking = false, int picking_data = 0);
+	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount);
+	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount, int picking_data);
 	void RenderMesh(UTIL_UUID id, lgl::Shader* shader);
-	void RenderMesh(UTIL_UUID id, int picking_data);
+	void RenderMesh(UTIL_UUID id, lgl::Shader* shader, int picking_data);
 
 	enum Plane {
 		XY,

@@ -23,7 +23,13 @@ struct Light {
 uniform Light light;
 uniform Material material;
 
+flat in int vertexid;
+flat in int instanceid;
+uniform int data;
+
 void main() {
+	gl_FragData[1] = vec4(1, float(data), float(instanceid), float(vertexid));
+
 	vec3 light_dir;
 	if (light.pos.w == 0.0)
 		light_dir = normalize(light.pos.xyz);

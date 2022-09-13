@@ -161,7 +161,7 @@ UTIL_UUID lre::InsertMesh(std::string name, const util::TYPE_MESH_GPU& mesh, UTI
 	return id;
 }
 
-void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount, bool picking, int picking_data) {
+void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount) {
 	assert(indexbuffer != nullptr && vertexarray != nullptr);
 	if (indexcount == 0) return;
 
@@ -173,17 +173,20 @@ void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray
 		shader->Bind();
 
 	lgl::DrawIndexed(primitive, indexcount, lgl::UNSIGNED_INT, nullptr);
-	
-	if (picking) {
-		auto* select_shader = GetShader("select");
+}
 
-		select_shader->Bind();
-		select_shader->SetUniformi("data", picking_data);
+void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount, int picking_data) {
+	assert(indexbuffer != nullptr && vertexarray != nullptr && shader != nullptr);
+	if (indexcount == 0) return;
 
-		lgl::DrawIndexed(primitive, indexcount, lgl::UNSIGNED_INT, nullptr);
+	vertexarray->Bind();
+	vertexarray->BindVertexBuffer(vertexbuffer, vertexarray->stride);
+	vertexarray->BindIndexBuffer(indexbuffer);
 
-		select_shader->UnBind();
-	}
+	shader->Bind();
+	shader->SetUniformi("data", picking_data);
+
+	lgl::DrawIndexed(primitive, indexcount, lgl::UNSIGNED_INT, nullptr);
 }
 
 void lre::RenderMesh(UTIL_UUID id, lgl::Shader* shader) {
@@ -191,15 +194,15 @@ void lre::RenderMesh(UTIL_UUID id, lgl::Shader* shader) {
 
 	auto [vertexarray, vertexbuffer, vertexcount, indexbuffer, indexcount] = self->mesh_registry[id].second;
 
-	Render(lgl::TRIANGLE, shader, vertexarray, vertexbuffer, indexbuffer, indexcount, false);
+	Render(lgl::TRIANGLE, shader, vertexarray, vertexbuffer, indexbuffer, indexcount);
 }
 
-void lre::RenderMesh(UTIL_UUID id, int picking_data) {
+void lre::RenderMesh(UTIL_UUID id, lgl::Shader* shader, int picking_data) {
 	assert(self->mesh_registry.find(id) != self->mesh_registry.end());
 
-	auto [ vertexarray, vertexbuffer, vertexcount, indexbuffer, indexcount] = self->mesh_registry[id].second;
+	auto [vertexarray, vertexbuffer, vertexcount, indexbuffer, indexcount] = self->mesh_registry[id].second;
 
-	Render(lgl::TRIANGLE, nullptr, vertexarray, vertexbuffer, indexbuffer, indexcount, true, picking_data);
+	Render(lgl::TRIANGLE, shader, vertexarray, vertexbuffer, indexbuffer, indexcount, picking_data);
 }
 
 void lre::RenderGrid(Plane plane, int count, int grid_size, const glm::vec4& color) {
