@@ -44,6 +44,8 @@ int main(int argcount, char** args) {
 
 	auto& roboticarm = registry.store<RoboticArm>();
 
+	roboticarm.LoadAnimations();
+
 	double dt = 0;
 	while (!Events::IsQuittable()) {
 		const auto& start_time = std::chrono::high_resolution_clock::now();

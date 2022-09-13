@@ -236,3 +236,7 @@ void RoboticArm::AnimationStep() {
 void RoboticArm::SaveAnimations() {
 	SerializeRoboticArmAnimations("animations.yaml");
 }
+
+void RoboticArm::LoadAnimations() {
+	DeserializeRoboticArmAnimations("animations.yaml");
+}

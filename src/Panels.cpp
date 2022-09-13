@@ -35,38 +35,38 @@ void ArmControlPanel() {
 		// 	roboticarm.AddPosition(roboticarm.GetPosition());
 		// }
 
-		ImGui::Spacing();
-
-		auto& animation_status = roboticarm.animation_status;
-
-		switch (animation_status) {
-			case PLAY:
-				ImGui::TextColored({ 0, 1, 0, 1 }, "PLAYING");
-				break;
-			case PAUSE:
-				ImGui::TextColored({ 1, 1, 0, 1 }, "PAUSED");
-				break;
-			case STOP:
-				ImGui::TextColored({ 1, 0, 0, 1 }, "STOPPED");
-				break;
-
-			default:	
-				break;
-		}
-
 		// ImGui::Spacing();
 
-		if (ImGui::Button("PLAY")) {
-			animation_status = PLAY;
-		}
+		// auto& animation_status = roboticarm.animation_status;
 
-		if (ImGui::Button("PAUSE")) {
-			animation_status = PAUSE;
-		}
+		// switch (animation_status) {
+		// 	case PLAY:
+		// 		ImGui::TextColored({ 0, 1, 0, 1 }, "PLAYING");
+		// 		break;
+		// 	case PAUSE:
+		// 		ImGui::TextColored({ 1, 1, 0, 1 }, "PAUSED");
+		// 		break;
+		// 	case STOP:
+		// 		ImGui::TextColored({ 1, 0, 0, 1 }, "STOPPED");
+		// 		break;
 
-		if (ImGui::Button("STOP")) {
-			animation_status = STOP;
-		}
+		// 	default:	
+		// 		break;
+		// }
+
+		// // ImGui::Spacing();
+
+		// if (ImGui::Button("PLAY")) {
+		// 	animation_status = PLAY;
+		// }
+
+		// if (ImGui::Button("PAUSE")) {
+		// 	animation_status = PAUSE;
+		// }
+
+		// if (ImGui::Button("STOP")) {
+		// 	animation_status = STOP;
+		// }
 	}
 	ImGui::End();
 }
@@ -97,17 +97,27 @@ void AnimationEditPanel() {
 				}
 
 				ImGui::TableSetColumnIndex(1);
-				if (ImGui::Button(("Play##" + std::to_string(idx++)).c_str(), { ImGui::GetColumnWidth(1), 0 })) {
-					roboticarm.animation_status = STOP;
+				if (roboticarm.animation_status == PLAY && roboticarm.animation == &pair.second.animation) {
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 1, 1, 0, 0.5 });
+					if (ImGui::Button(("Pause##" + std::to_string(idx++)).c_str(), { ImGui::GetColumnWidth(1), 0 })) {
+						roboticarm.animation_status = PAUSE;
+					}
+					ImGui::PopStyleColor();
+				} else {
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0, 1, 0, 0.5 });
+					if (ImGui::Button(("Play##" + std::to_string(idx++)).c_str(), { ImGui::GetColumnWidth(1), 0 })) {
+						roboticarm.animation_status = STOP;
 
-					roboticarm.AnimationStep();
+						roboticarm.AnimationStep();
 
-					roboticarm.animation_status = PLAY;
-					roboticarm.animation = &pair.second.animation;
+						roboticarm.animation_status = PLAY;
+						roboticarm.animation = &pair.second.animation;
+					}
+					ImGui::PopStyleColor();
 				}
 
 				ImGui::TableSetColumnIndex(2);
-				if (ImGui::Button((pair.second.animation.loop) ? "True" : "False", { ImGui::GetColumnWidth(2), 0 })) {
+				if (ImGui::Button((pair.second.animation.loop) ? ("True##" + std::to_string(idx++)).c_str() : ("False##" + std::to_string(idx++)).c_str(), { ImGui::GetColumnWidth(2), 0 })) {
 					pair.second.animation.loop = !pair.second.animation.loop;
 				}
 			}

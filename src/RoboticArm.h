@@ -82,6 +82,7 @@ struct RoboticArm {
 	glm::mat4 GetWristRotationalMatrix();
 
 	void SaveAnimations();
+	void LoadAnimations();
 
 private:
 	bool IsNamePresent(std::string name);
