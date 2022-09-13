@@ -100,6 +100,10 @@ int main(int argcount, char** args) {
 
 		Editor::Update();
 
+		if (Events::IsKeyPressed({ SDL_SCANCODE_S, SDL_SCANCODE_LCTRL })) {
+			roboticarm.SaveAnimations();
+		}
+
 		// lre::RenderFrameBufferToScreen(window.framebuffer, window.size);
 
 		window.SwapWindow();

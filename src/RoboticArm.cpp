@@ -2,6 +2,7 @@
 #include <imgui_lucy_impl.h>
 #include <LucyRE/LucyRE.h>
 #include <iostream>
+#include "Serializer.h"
 #include "Camera.h"
 #include "Transform.h"
 #include "ECS.h"
@@ -15,8 +16,7 @@ static struct {
 	UTIL_UUID mesh_id = UTIL_NULL_UUID;
 	Transform transform;
 	glm::mat4 matrix;
-}
-lower_base = {{ 44.0448, 71.6270, 55.25 }},
+} lower_base = {{ 44.0448, 71.6270, 55.25 }},
 upper_base = {{ 44.0448, 71.6270, 55.25 }},
 lower_elbow = {{ 44.2948, 86.6948, 55.25 }},
 upper_elbow = {{ 44.2948, 190.8709, 55.25 }},
@@ -148,6 +148,26 @@ glm::mat4 RoboticArm::GetWristTranslationalMatrix() {
 	return wrist.transform.GetTranslationMatrix();
 }
 
+glm::mat4 RoboticArm::GetLowerBaseRotationalMatrix() {
+	return lower_base.transform.GetRotationMatrix();
+}
+
+glm::mat4 RoboticArm::GetUpperBaseRotationalMatrix() {
+	return upper_base.transform.GetRotationMatrix();
+}
+
+glm::mat4 RoboticArm::GetLowerElbowRotationalMatrix() {
+	return lower_elbow.transform.GetRotationMatrix();
+}
+
+glm::mat4 RoboticArm::GetUpperElbowRotationalMatrix() {
+	return upper_elbow.transform.GetRotationMatrix();
+}
+
+glm::mat4 RoboticArm::GetWristRotationalMatrix() {
+	return wrist.transform.GetRotationMatrix();
+}
+
 glm::mat4 RoboticArm::GetLowerBaseMatrix() {
 	return lower_base.matrix;
 }
@@ -213,3 +233,6 @@ void RoboticArm::AnimationStep() {
 	}
 }
 
+void RoboticArm::SaveAnimations() {
+	SerializeRoboticArmAnimations("animations.yaml");
+}
