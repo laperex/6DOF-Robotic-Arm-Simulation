@@ -26,47 +26,6 @@ void ArmControlPanel() {
 		ImGui::DragFloat("Wrist Length", &roboticarm.wrist_length, 0.1, 0);
 
 		ImGui::DragFloat3("Target", &roboticarm.ik_target[0], 0.1);
-
-		// if (ImGui::Button("Clear")) {
-		// 	roboticarm.ClearSavedPositions();
-		// }
-
-		// if (ImGui::Button("Save")) {
-		// 	roboticarm.AddPosition(roboticarm.GetPosition());
-		// }
-
-		// ImGui::Spacing();
-
-		// auto& animation_status = roboticarm.animation_status;
-
-		// switch (animation_status) {
-		// 	case PLAY:
-		// 		ImGui::TextColored({ 0, 1, 0, 1 }, "PLAYING");
-		// 		break;
-		// 	case PAUSE:
-		// 		ImGui::TextColored({ 1, 1, 0, 1 }, "PAUSED");
-		// 		break;
-		// 	case STOP:
-		// 		ImGui::TextColored({ 1, 0, 0, 1 }, "STOPPED");
-		// 		break;
-
-		// 	default:	
-		// 		break;
-		// }
-
-		// // ImGui::Spacing();
-
-		// if (ImGui::Button("PLAY")) {
-		// 	animation_status = PLAY;
-		// }
-
-		// if (ImGui::Button("PAUSE")) {
-		// 	animation_status = PAUSE;
-		// }
-
-		// if (ImGui::Button("STOP")) {
-		// 	animation_status = STOP;
-		// }
 	}
 	ImGui::End();
 }

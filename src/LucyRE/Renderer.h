@@ -1,7 +1,9 @@
 #pragma once
 
-#include "LucyUtil/LucyUtil.h"
+#include <LucyUtil/LucyUtil.h>
+#include "Vertex.h"
 #include <string>
+#include <vector>
 #include <memory>
 #include <LucyGL/LucyGL.h>
 #include <glm/glm.hpp>
@@ -58,8 +60,46 @@ namespace lre {
 
 	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount);
 	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, lgl::IndexBuffer* indexbuffer, int indexcount, int picking_data);
+	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, int vertexcount);
+	void Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, int vertexcount, int picking_data);
+
 	void RenderMesh(UTIL_UUID id, lgl::Shader* shader);
 	void RenderMesh(UTIL_UUID id, lgl::Shader* shader, int picking_data);
+
+	template <typename T>
+	void RenderLine(lgl::Primitive primitive, lgl::VertexArray* vertexarray, const T* vertices, int vertexcount) {
+		if (vertexcount <= 0) return;
+		assert(vertexarray != nullptr);
+
+		static lgl::VertexBuffer* vertexbuffer = nullptr;
+
+		if (vertexbuffer == nullptr) {
+			vertexbuffer = new lgl::VertexBuffer();
+		}
+
+		vertexbuffer->Bind();
+		vertexbuffer->Allocate(vertexcount * sizeof(T));
+		vertexbuffer->AddDataDynamic((void*)vertices, vertexcount * sizeof(T));
+
+		vertexarray->Bind();
+		vertexarray->BindVertexBuffer(vertexbuffer, vertexarray->stride);
+
+		Render(primitive, nullptr, vertexarray, vertexbuffer, vertexcount);
+	}
+
+	template <typename T>
+	void RenderLine(lgl::Primitive primitive, const T* vertices, int vertexcount) {
+		RenderLine(primitive, T::VertexArray(), vertices, vertexcount);
+	}
+
+	void RenderLine(const std::vector<Vertex::P1>& vertices, const glm::vec4& color);
+	void RenderLine(const std::vector<glm::vec3>& vertices, const glm::vec4& color);
+	void RenderLine(const std::vector<Vertex::P1C1>& vertices);
+	void RenderLine(const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& color);
+	void FlushLine();
+
+	void RenderLineStrip(const std::vector<Vertex::P1>& vertices, const glm::vec4& color);
+	void RenderLineStrip(const std::vector<Vertex::P1C1>& vertices);
 
 	enum Plane {
 		XY,
@@ -69,6 +109,7 @@ namespace lre {
 
 	void RenderGrid(Plane plane, int count, int grid_size, const glm::vec4& color);
 	void Test();
+	void GridTest(lgl::FrameBuffer* framebuffer, glm::vec2 size);
 
 	void Destroy();
 }

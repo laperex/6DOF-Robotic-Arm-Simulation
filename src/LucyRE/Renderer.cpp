@@ -102,6 +102,18 @@ void lre::InitializeMainShaders() {
 	select->FragmentShader(SHADER_PATH("select.fs"));
 	select->Link();
 	self->shader_registry["select"] = select;
+
+	lgl::Shader* grid = new lgl::Shader();
+	grid->VertexShader(SHADER_PATH("vertex.vs"));
+	grid->FragmentShader(SHADER_PATH("grid.fs"));
+	grid->Link();
+	self->shader_registry["grid"] = grid;
+
+	lgl::Shader* grid_screen = new lgl::Shader();
+	grid_screen->VertexShader(SHADER_PATH("screen_tex.vs"));
+	grid_screen->FragmentShader(SHADER_PATH("grid.fs"));
+	grid_screen->Link();
+	self->shader_registry["grid_screen"] = grid_screen;
 }
 
 void lre::SetFrameBuffer(lgl::FrameBuffer* framebuffer) {
@@ -189,6 +201,32 @@ void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray
 	lgl::DrawIndexed(primitive, indexcount, lgl::UNSIGNED_INT, nullptr);
 }
 
+void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, int vertexcount) {
+	assert(vertexarray != nullptr);
+	if (vertexcount == 0) return;
+
+	vertexarray->Bind();
+	vertexarray->BindVertexBuffer(vertexbuffer, vertexarray->stride);
+
+	if (shader != nullptr)
+		shader->Bind();
+
+	lgl::Draw(primitive, 0, vertexcount);
+}
+
+void lre::Render(lgl::Primitive primitive, lgl::Shader* shader, lgl::VertexArray* vertexarray, lgl::VertexBuffer* vertexbuffer, int vertexcount, int picking_data) {
+	assert(vertexarray != nullptr && shader != nullptr);
+	if (vertexcount == 0) return;
+
+	vertexarray->Bind();
+	vertexarray->BindVertexBuffer(vertexbuffer, vertexarray->stride);
+
+	shader->Bind();
+	shader->SetUniformi("data", picking_data);
+
+	lgl::Draw(primitive, 0, vertexcount);
+}
+
 void lre::RenderMesh(UTIL_UUID id, lgl::Shader* shader) {
 	assert(self->mesh_registry.find(id) != self->mesh_registry.end());
 
@@ -203,6 +241,54 @@ void lre::RenderMesh(UTIL_UUID id, lgl::Shader* shader, int picking_data) {
 	auto [vertexarray, vertexbuffer, vertexcount, indexbuffer, indexcount] = self->mesh_registry[id].second;
 
 	Render(lgl::TRIANGLE, shader, vertexarray, vertexbuffer, indexbuffer, indexcount, picking_data);
+}
+
+void lre::RenderLine(const std::vector<Vertex::P1>& vertices, const glm::vec4& color) {
+	auto* shader = GetShader("const_color");
+
+	shader->Bind();
+	shader->SetUniformVec4("u_color", &color[0]);
+
+	RenderLine(lgl::LINE, vertices.data(), vertices.size());
+}
+
+void lre::RenderLine(const std::vector<Vertex::P1C1>& vertices) {
+	auto* shader = GetShader("color");
+
+	shader->Bind();
+
+	RenderLine(lgl::LINE, vertices.data(), vertices.size());
+}
+
+static std::vector<lre::Vertex::P1C1> line_vertices;
+
+void lre::FlushLine() {
+	RenderLine(line_vertices);
+	line_vertices.clear();
+}
+
+void lre::RenderLine(const glm::vec3& v0, const glm::vec3& v1, const glm::vec4& color) {
+	line_vertices.reserve(2 + line_vertices.size());
+
+	line_vertices.emplace_back(lre::Vertex::P1C1{ v0, color });
+	line_vertices.emplace_back(lre::Vertex::P1C1{ v1, color });
+}
+
+void lre::RenderLine(const std::vector<glm::vec3>& vertices, const glm::vec4& color) {
+	auto* shader = GetShader("const_color");
+
+	shader->Bind();
+	shader->SetUniformVec4("u_color", &color[0]);
+
+	RenderLine(lgl::LINE, Vertex::P1::VertexArray(), vertices.data(), vertices.size());
+}
+
+void lre::RenderLineStrip(const std::vector<Vertex::P1>& vertices, const glm::vec4& color) {
+	
+}
+
+void lre::RenderLineStrip(const std::vector<Vertex::P1C1>& vertices) {
+	
 }
 
 void lre::RenderGrid(Plane plane, int count, int grid_size, const glm::vec4& color) {
@@ -221,11 +307,13 @@ void lre::Destroy() {
 
 
 void lre::Test() {
+	SetModel(glm::mat4(1.0f));
+
 	lre::Vertex::P1N1 test_vertices[] = {
-		{{ -1, -0.5, -0.5 }, { 0.0, 0.0, 1.0 }},
-		{{ -0.5, +0.5, -0.5 }, { 0.0, 0.0, 1.0 }},
-		{{ +0.5, +0.5, -0.5 }, { 0.0, 0.0, 1.0 }},
-		{{ +0.5, -0.5, -0.5 }, { 0.0, 0.0, 1.0 }},
+		{{ -0.5 * 500, -0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+		{{ -0.5 * 500, +0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+		{{ +0.5 * 500, +0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+		{{ +0.5 * 500, -0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
 	};
 
 	uint32_t test_indices[] = {
@@ -252,8 +340,70 @@ void lre::Test() {
 		indexbuffer->AddData(test_indices, sizeof(test_indices));
 	}
 
-	auto* shader = lre::GetShader("normal");
+	auto* shader = lre::GetShader("grid");
 	shader->Bind();
+
+	vertexarray->Bind();
+	vertexarray->BindVertexBuffer(vertexbuffer, vertexarray->stride);
+	vertexarray->BindIndexBuffer(indexbuffer);
+
+	lgl::DrawIndexed(lgl::TRIANGLE, 6, lgl::UNSIGNED_INT, nullptr);
+}
+
+void lre::GridTest(lgl::FrameBuffer* framebuffer, glm::vec2 size) {
+	// framebuffer->Bind();
+	// auto* shader = GetShader("grid_screen");
+
+	// shader->Bind();
+	// glm::vec2 res_uv = { framebuffer->width / size.x, framebuffer->height / size.y };
+	// shader->SetUniformVec2("res_uv", &res_uv[0]);
+	// shader->SetUniformi("u_texture", 0);
+	// shader->SetUniformVec2("u_resolution", &size[0]);
+
+	// framebuffer->texture->BindUnit(0);
+
+	// static auto* vertexarray = new lgl::VertexArray({});
+	// vertexarray->Bind();
+
+	// lgl::Draw(lgl::TRIANGLE, 0, 6);
+
+	// vertexarray->UnBind();
+	// shader->UnBind();
+
+	lre::Vertex::P1N1 test_vertices[] = {
+		{{ -0.5 * 500, -0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+		{{ -0.5 * 500, +0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+		{{ +0.5 * 500, +0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+		{{ +0.5 * 500, -0.5 * 500, -0.5 * 500 }, { 0.0, 0.0, 1.0 }},
+	};
+
+	uint32_t test_indices[] = {
+		0 + 4 * 0, 1 + 4 * 0, 2 + 4 * 0, 2 + 4 * 0, 3 + 4 * 0, 0 + 4 * 0,
+	};
+
+	static lgl::VertexArray* vertexarray = lre::Vertex::P1N1::VertexArray();
+	static lgl::VertexBuffer* vertexbuffer = nullptr;
+	static lgl::IndexBuffer* indexbuffer = nullptr;
+
+	if (vertexbuffer == nullptr) {
+		vertexbuffer = new lgl::VertexBuffer();
+
+		vertexbuffer->Bind();
+		vertexbuffer->Allocate(sizeof(test_vertices));
+		vertexbuffer->AddDataDynamic(test_vertices, sizeof(test_vertices));
+	}
+
+	if (indexbuffer == nullptr) {
+		indexbuffer = new lgl::IndexBuffer();
+
+		indexbuffer->Bind();
+		indexbuffer->Allocate(sizeof(test_indices));
+		indexbuffer->AddData(test_indices, sizeof(test_indices));
+	}
+
+	auto* shader = lre::GetShader("grid");
+	shader->Bind();
+	shader->SetUniformVec2("u_resolution", &size[0]);
 
 	vertexarray->Bind();
 	vertexarray->BindVertexBuffer(vertexbuffer, vertexarray->stride);

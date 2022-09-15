@@ -12,5 +12,5 @@ void main() {
 	if (normal.z < 0)
 		result.z = -normal.z;
 
-	gl_FragData[0] = vec4(result, 1);
+	gl_FragData[0] = vec4(1);
 }

@@ -98,6 +98,31 @@ int main(int argcount, char** args) {
 
 		shader->UnBind();
 
+		{
+			lre::SetModel(glm::mat4(1.0));
+			
+			glEnable(GL_LINE_SMOOTH);
+
+			int unit_size = 100;
+			int grid_len = 10;
+
+			static std::vector<glm::vec3> grid;
+
+			// for (int z = -(grid_len / 2); z < +(grid_len / 2); z++) {
+			// 	grid.push_back({ -(grid_len / 2) * unit_size, 0, z * unit_size });
+			// 	grid.push_back({ +(grid_len / 2) * unit_size, 0, z * unit_size });
+			// }
+			lre::GridTest(window.framebuffer, window.size);
+
+			lre::RenderLine(grid, { 1, 1, 1, 1 });
+
+			lre::RenderLine({ 0, 0, 0 }, { 0, 0, 10000 }, { 0, 0, 1, 0.7 });
+			lre::RenderLine({ 0, 0, 0 }, { 0, 10000, 0 }, { 0, 1, 0, 0.7 });
+			lre::RenderLine({ 0, 0, 0 }, { 10000, 0, 0 }, { 1, 0, 0, 0.7 });
+
+			lre::FlushLine();
+		}
+
 		window.framebuffer->UnBind();
 
 		Editor::Update();

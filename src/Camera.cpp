@@ -16,7 +16,7 @@ glm::vec3 initpos;
 Camera::Camera() {
 	position = { 0, 0, 500 };
 	c_near = 10;
-	c_far = 1000;
+	c_far = 3000;
 }
 
 void Camera::Update(double dt) {

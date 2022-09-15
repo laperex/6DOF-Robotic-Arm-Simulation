@@ -199,6 +199,14 @@ void RoboticArm::AnimationStep() {
 
 	if (animation == nullptr) {
 		prev_position = position;
+
+		return;
+	}
+
+	if (animation_status == PAUSE) {
+		progress = 0;
+		prev_position = position;
+
 		return;
 	}
 
@@ -223,14 +231,18 @@ void RoboticArm::AnimationStep() {
 	}
 
 	if (idx >= this->animation->animation_step_array.size()) {
-		this->animation_status = STOP;
+		if (!animation->loop) {
+			this->animation_status = STOP;
+		} else {
+			idx = 0;
+		}
 	}
 
-	if (this->animation_status == STOP) {
-		idx = 0;
-		progress = 0;
-		prev_position = position;
-	}
+	// if (this->animation_status == STOP) {
+	// 	idx = 0;
+	// 	progress = 0;
+	// 	prev_position = position;
+	// }
 }
 
 void RoboticArm::SaveAnimations() {
